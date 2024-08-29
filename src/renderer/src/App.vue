@@ -2,6 +2,7 @@
   <div :style="style">
     <div>{{ uuid }}</div>
     <button @click="handleClick">获取设备信息</button>
+    <div v-if="loading">获取中...</div>
   </div>
 </template>
 
@@ -15,14 +16,22 @@ const style: CSSProperties = {
   flexDirection: 'column',
   gap: '10px'
 }
+const loading = ref(false)
 onMounted(async () => {
   uuid.value = await window.electron.ipcRenderer.invoke('getUUID')
   console.log(uuid.value)
 })
 
 async function handleClick() {
-  const res = await window.electron.ipcRenderer.invoke('getSystemInfo')
-  download(JSON.stringify(res))
+  loading.value = true
+  try {
+    const res = await window.electron.ipcRenderer.invoke('getSystemInfo')
+    download(JSON.stringify(res))
+  } catch (e) {
+    console.log(e)
+  } finally {
+    loading.value = false
+  }
 }
 function download(text: string) {
   const blob = new Blob([text], { type: 'text/plain' })
